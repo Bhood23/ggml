@@ -12,7 +12,26 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <io.h>
+
+#define STDIN_FILENO _fileno( stdin )
+#define STDOUT_FILENO _fileno( stdout )
+#define STDERR_FILENO _fileno( stdout )
+
+#define isatty _isatty
+
+#undef min
+#undef max
+
+#else
 #include <unistd.h>
+#endif
 
 // default hparams (GPT-J 6B)
 struct gptj_hparams {
@@ -416,8 +435,7 @@ bool gptj_eval(
     };
 
     struct ggml_context * ctx0 = ggml_init(params);
-    struct ggml_cgraph gf = {};
-    gf.n_threads = n_threads;
+    struct ggml_cgraph gf = { .n_threads = n_threads };
 
     struct ggml_tensor * embd = ggml_new_tensor_1d(ctx0, GGML_TYPE_I32, N);
     memcpy(embd->data, embd_inp.data(), N*ggml_element_size(embd));
